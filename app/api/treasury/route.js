@@ -1,32 +1,27 @@
 // app/api/treasury/route.js
 
-// Which series you want (examples: DGS2, DGS5, DGS10, DGS30)
-const SERIES_IDS = ['DGS2', 'DGS5', 'DGS10', 'DGS30'];
-
 export async function GET() {
   try {
-    const apiKey = process.env.FRED_API_KEY; // set in Vercel
-    const results = await Promise.all(
-      SERIES_IDS.map(async (id) => {
-        const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${id}&api_key=${apiKey}&file_type=json`;
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`FRED request failed for ${id}`);
-        const data = await res.json();
+    // 👇 Access the FRED API key from your environment variables
+    const apiKey = process.env.FRED_API_KEY;
 
-        // grab the most recent non-empty value
-        const observations = (data?.observations ?? []).reverse();
-        const latest = observations.find(o => o.value && o.value !== '.');
+    // 👇 Example: 10-Year Treasury yield (DGS10)
+    const seriesId = 'DGS10';
+    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json`;
 
-        return { id, latest };
-      })
-    );
+    const response = await fetch(url);
+    const data = await response.json();
 
-    return new Response(JSON.stringify({ results }), {
+    // 👇 Return the data as JSON
+    return new Response(JSON.stringify(data), {
       headers: { 'Content-Type': 'application/json' },
       status: 200,
     });
-  } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: 'Failed to fetch FRED data' }), { status: 500 });
+  } catch (error) {
+    console.error('Error fetching data from FRED:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch treasury data' }),
+      { status: 500 }
+    );
   }
 }
