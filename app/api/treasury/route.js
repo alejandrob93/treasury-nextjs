@@ -20,4 +20,26 @@ async function fetchLatestFor(id, apiKey) {
   return {
     id,
     latest: latest
-      ? { date: latest.date, value: Number(la
+      ? { date: latest.date, value: Number(latest.value) }
+      : null,
+  };
+}
+
+export async function GET() {
+  try {
+    const apiKey = process.env.FRED_API_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'Missing FRED_API_KEY' }), { status: 500 });
+    }
+
+    const results = await Promise.all(SERIES_IDS.map(id => fetchLatestFor(id, apiKey)));
+
+    return new Response(JSON.stringify({ results }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 200,
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response(JSON.stringify({ error: 'Failed to fetch FRED data' }), { status: 500 });
+  }
+}
