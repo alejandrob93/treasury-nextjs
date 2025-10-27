@@ -36,13 +36,16 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ id, latest }) => (
-              <tr key={id}>
-                <td style={td}>{id}</td>
-                <td style={td}>{latest?.date ?? '—'}</td>
-                <td style={td}>{latest?.value ?? '—'}</td>
-              </tr>
-            ))}
+            {rows.map(({ id, observations }) => {
+              const latest = observations[observations.length - 1]; // latest point
+              return (
+                <tr key={id}>
+                  <td style={td}>{id}</td>
+                  <td style={td}>{latest?.date ?? '—'}</td>
+                  <td style={td}>{latest?.value ?? '—'}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
