@@ -1,27 +1,23 @@
 // app/api/treasury/route.js
+const SERIES_IDS = ['DGS2', 'DGS5', 'DGS10', 'DGS30'];
 
-export async function GET() {
-  try {
-    // 👇 Access the FRED API key from your environment variables
-    const apiKey = process.env.FRED_API_KEY;
+/**
+ * Helper: fetch the most recent non-missing observation for a series.
+ */
+async function fetchLatestFor(id, apiKey) {
+  // Ask FRED for the most recent 30 daily points (descending)
+  const url =
+    `https://api.stlouisfed.org/fred/series/observations` +
+    `?series_id=${id}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=30`;
 
-    // 👇 Example: 10-Year Treasury yield (DGS10)
-    const seriesId = 'DGS10';
-    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json`;
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`FRED error for ${id}: ${res.status}`);
 
-    const response = await fetch(url);
-    const data = await response.json();
+  const data = await res.json();
+  // Find the first valid value (FRED sometimes returns '.' for missing)
+  const latest = (data.observations || []).find(o => o.value && o.value !== '.');
 
-    // 👇 Return the data as JSON
-    return new Response(JSON.stringify(data), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 200,
-    });
-  } catch (error) {
-    console.error('Error fetching data from FRED:', error);
-    return new Response(
-      JSON.stringify({ error: 'Failed to fetch treasury data' }),
-      { status: 500 }
-    );
-  }
-}
+  return {
+    id,
+    latest: latest
+      ? { date: latest.date, value: Number(la
